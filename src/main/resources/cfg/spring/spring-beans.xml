@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+            http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+
+
+
+
+            http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context-4.0.xsd
+            http://www.springframework.org/schema/tx 
+            http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+            http://www.springframework.org/schema/data/jpa
+            http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
+    <context:annotation-config/>
+
+    <!-- 启动自动扫描该包下所有的注解(如@controller) -->
+    <context:component-scan
+            base-package="com.youwinedu.lizi"/>
+
+    <!-- 加载数据库属性配置文件 -->
+    <context:property-placeholder
+            location="classpath*:/cfg/database/*.properties"/>
+
+    <!-- 数据源配置 -->
+    <!-- org.springframework.jdbc.datasource.DriverManagerDataSource -->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <!-- 驱动类 -->
+        <property name="driverClass" value="${jdbc.driverClass}"/>
+        <!-- jdbc url -->
+        <property name="jdbcUrl" value="${jdbc.jdbcUrl}"/>
+        <!-- 数据库用户 -->
+        <property name="user" value="${jdbc.user}"/>
+        <!-- 数据库用户密码 -->
+        <property name="password" value="${jdbc.password}"/>
+        <!-- 最小连接数 -->
+        <property name="minPoolSize" value="${jdbc.miniPoolSize}"/>
+        <!-- 最大连接数 -->
+        <property name="maxPoolSize" value="${jdbc.maxPoolSize}"/>
+        <!-- 初始化连接数 -->
+        <property name="initialPoolSize" value="${jdbc.initialPoolSize}"/>
+        <!--最大空闲时间,60秒内未使用则连接被丢弃。若为0则永不丢弃。Default: 0 -->
+        <property name="maxIdleTime" value="${jdbc.maxIdleTime}"/>
+        <!--当连接池中的连接耗尽的时候c3p0一次同时获取的连接数。Default: 3 -->
+        <property name="acquireIncrement" value="${jdbc.acquireIncrement}"/>
+        <!--定义在从数据库获取新连接失败后重复尝试的次数 -->
+        <property name="acquireRetryAttempts" value="${jdbc.acquireRetryAttempts}"/>
+        <!--两次连接中间隔时间，单位毫秒。Default: 1000 -->
+        <property name="acquireRetryDelay" value="${jdbc.acquireRetryDelay}"/>
+        <!--如果设为true那么在取得连接的同时将校验连接的有效性。Default: false -->
+        <property name="testConnectionOnCheckin" value="${jdbc.testConnectionOnCheckin}"/>
+        <!--c3p0将建一张名为Test的空表，并使用其自带的查询语句进行测试。如果定义了这个参数那么 属性preferredTestQuery将被忽略。你不能在这张Test表上进行任何操作，它将只供c3p0测试
+            使用。Default: null -->
+        <property name="automaticTestTable" value="${jdbc.automaticTestTable}"/>
+        <!--每60秒检查所有连接池中的空闲连接。Default: 0 -->
+        <property name="idleConnectionTestPeriod" value="${jdbc.idleConnectionTestPeriod}"/>
+        <!--当连接池用完时客户端调用getConnection()后等待获取新连接的时间，超时后将抛出 SQLException,如设为0则无限期等待。单位毫秒。Default:
+            0 -->
+        <property name="checkoutTimeout" value="${jdbc.checkoutTimeout}"/>
+    </bean>
+
+    <!-- 定义实体管理器工厂JPA -->
+    <bean id="entityManagerFactory"
+          class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="persistenceUnitName" value="lizi"></property>
+        <property name="persistenceXmlLocation"
+                  value="WEB-INF/classes/cfg/database/persistence.xml"></property>
+        <property name="jpaVendorAdapter">
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+                <property name="showSql" value="true"></property>
+                <property name="database" value="MYSQL"></property>
+            </bean>
+        </property>
+    </bean>
+
+    <!-- 配置Spring Data JPA扫描目录 -->
+    <jpa:repositories base-package="com.youwinedu.lizi.dao"
+                      entity-manager-factory-ref="entityManagerFactory"
+                      transaction-manager-ref="transactionManager">
+    </jpa:repositories>
+
+    <!-- 配置事务管理器 -->
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactory"/>
+    </bean>
+
+    <!-- 启用 annotation事务 -->
+    <tx:annotation-driven transaction-manager="transactionManager"
+                          proxy-target-class="false"/>
+</beans>
